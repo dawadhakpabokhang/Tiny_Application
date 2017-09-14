@@ -48,6 +48,11 @@ app.post("/urls", (req, res) => {
   res.redirect('/urls/' + randomString);
 });
 
+app.post("/urls/:id", (req, res) => {
+ urlDatabase[req.params.id] = req.body.newLongUrl;
+ res.redirect('/urls');
+});
+
 // this route gets rid of the key and value pair given by the user and present within the urlDatabase object
 app.post("/urls/:key/delete", (req, res) => {
   delete urlDatabase[req.params.key];

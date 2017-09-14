@@ -14,5 +14,9 @@
         <b> Short Url: </b>
         <%= shortURL %>
       </p>
+       <form method="POST" action="/urls/<%=shortURL%>">
+        <input type="text" name="newLongUrl"/>
+        <button type="submit"> Update </button>
+      </form>
   </body>
 </html>
