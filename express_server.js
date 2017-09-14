@@ -25,6 +25,11 @@ app.get("/urls/new", (req, res) =>{
   res.render("urls_new");
 });
 
+app.get("/u/:shortURL", (req, res) => {
+  // this grabs the parameter of the ;shortURL and then redirects
+  res.redirect('/urls/' + req.params.shortURL);
+});
+
 // takes user to the page displaying info based on myVar (the page is dynamic)
 app.get("/urls/:myVar", (req, res) =>{
   let templateVars = {  shortURL: req.params.myVar,
@@ -32,10 +37,15 @@ app.get("/urls/:myVar", (req, res) =>{
   res.render('urls_show', templateVars)
 });
 
-
+// upon posting a new website, generate a randomstring for the website and
+// push it and its url into the UrlDatabase
 app.post("/urls", (req, res) => {
-  console.log(req.body);
-  res.send("Ok");
+  let randomString = generateRandomString();
+  longURL = req.body.longURL;
+  // creating a new key and value and adding it to urlDatabase
+  urlDatabase[randomString] = longURL;
+  console.log(urlDatabase);
+  res.redirect('/urls/' + randomString);
 });
 
 // on the /hello path respond with an html document that contains Hey!
