@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>TinyApp</title>
+  </head>
+  <body>
+    <%- include ./partials/_headers.ejs %>
+    <ul>
+      <li>
+        <p>
+          <b>Long Url:</b>
+          <%= urls['b2xVn2'] %>
+        </p>
+        <p>
+          <b>Short Key:</b>
+          <%= Object.keys(urls)[0] %>
+        </p>
+      </li>
+      <li>
+        <p>
+          <b>Long Url:</b>
+          <%= urls['9sm5xK'] %>
+        </p>
+        <p>
+          <b>Short Key:</b>
+          <%= Object.keys(urls)[1] %>
+        </p>
+      </li>
+    </ul>
+    <link href="">
+  </body>
+</html>
