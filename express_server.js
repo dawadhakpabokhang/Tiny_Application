@@ -48,6 +48,12 @@ app.post("/urls", (req, res) => {
   res.redirect('/urls/' + randomString);
 });
 
+// this route gets rid of the key and value pair given by the user and present within the urlDatabase object
+app.post("/urls/:key/delete", (req, res) => {
+  delete urlDatabase[req.params.key];
+  res.redirect('/urls');
+});
+
 // on the /hello path respond with an html document that contains Hey!
 app.get("/hello", (req, res) =>{
   res.end('<html><body><h1>Hey!</h1></body></html');

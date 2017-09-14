@@ -6,26 +6,15 @@
   <body>
     <%- include ./partials/_headers.ejs %>
     <ul>
+      <% for(let currentUrl in urls){ %>
       <li>
-        <p>
-          <b>Long Url:</b>
-          <%= urls['b2xVn2'] %>
-        </p>
-        <p>
-          <b>Short Key:</b>
-          <%= Object.keys(urls)[0] %>
-        </p>
+        <p>Short URL: <%=currentUrl%></p>
+        <%=urls[currentUrl]%>
       </li>
-      <li>
-        <p>
-          <b>Long Url:</b>
-          <%= urls['9sm5xK'] %>
-        </p>
-        <p>
-          <b>Short Key:</b>
-          <%= Object.keys(urls)[1] %>
-        </p>
-      </li>
+      <form method="POST" action="/urls/<%=currentUrl%>/delete">
+        <button type="submit"> Delete </button>
+      </form>
+      <% } %>
     </ul>
     <link href="">
   </body>
