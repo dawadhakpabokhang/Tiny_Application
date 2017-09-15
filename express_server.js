@@ -2,6 +2,9 @@ const express = require("express");
 const app = express();
 const PORT = process.env.PORT || 8080; // default port 8080
 const bodyParser = require("body-parser");
+var cookieParser = require('cookie-parser');
+
+app.use(cookieParser());
 app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({extended: true}));
 
@@ -16,13 +19,15 @@ app.get("/", (req, res) => {
 
 // on the /urls path respond by rendering the urls_index page
 app.get("/urls", (req, res) =>{
-  let templateVars = { urls: urlDatabase };
+  let templateVars = { urls: urlDatabase,
+                       username: req.cookies["username"] };
   res.render("urls_index", templateVars);
 });
 
 // on this path it renders the urls_new page
 app.get("/urls/new", (req, res) =>{
-  res.render("urls_new");
+  let templateVars = { username: req.cookies["username"]};
+  res.render("urls_new", templateVars);
 });
 
 app.get("/u/:shortURL", (req, res) => {
@@ -33,7 +38,8 @@ app.get("/u/:shortURL", (req, res) => {
 // takes user to the page displaying info based on myVar (the page is dynamic)
 app.get("/urls/:myVar", (req, res) =>{
   let templateVars = {  shortURL: req.params.myVar,
-                        urlList: urlDatabase };
+                        urlList: urlDatabase,
+                        username: req.cookies["username"] };
   res.render('urls_show', templateVars)
 });
 
@@ -50,6 +56,16 @@ app.post("/urls", (req, res) => {
 
 app.post("/urls/:id", (req, res) => {
  urlDatabase[req.params.id] = req.body.newLongUrl;
+ res.redirect('/urls');
+});
+
+app.post("/login", (req, res) => {
+ res.cookie("username", req.body.username);
+ res.redirect('/urls');
+});
+
+app.post("/logout", (req, res) => {
+ res.clearCookie("username");
  res.redirect('/urls');
 });
 
