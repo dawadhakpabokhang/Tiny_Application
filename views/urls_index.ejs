@@ -9,7 +9,7 @@
       <% for(let currentUrl in urls){ %>
       <li>
         <p>Short URL: <%=currentUrl%></p>
-        <%=urls[currentUrl]%>
+        <%=urls[currentUrl].longURL%>
       </li>
       <form method="POST" action="/urls/<%=currentUrl%>/delete">
         <button type="submit"> Delete </button>

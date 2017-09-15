@@ -5,18 +5,22 @@
   </head>
   <body>
     <%- include ./partials/_headers.ejs %>
-      <p>
-        <b> Long Url: </b>
-        <!-- acceses the object UrlDatabase and returns the value of the short url key -->
-        <%= urlList[shortURL] %>
-      </p>
-      <p>
-        <b> Short Url: </b>
-        <%= shortURL %>
-      </p>
-       <form method="POST" action="/urls/<%=shortURL%>">
-        <input type="text" name="newLongUrl"/>
-        <button type="submit"> Update </button>
-      </form>
+      <% if(user) {%>
+        <p>
+          <b> Long Url: </b>
+          <!-- acceses the object UrlDatabase and returns the value of the short url key -->
+          <%= urlList[shortURL].longURL %>
+        </p>
+        <p>
+          <b> Short Url: </b>
+          <%= shortURL %>
+        </p>
+         <form method="POST" action="/urls/<%=shortURL%>">
+          <input type="text" name="newLongUrl"/>
+          <button type="submit"> Update </button>
+        </form>
+      <%} else {%>
+        <p> Please login or Register </p>
+      <% } %>
   </body>
 </html>
