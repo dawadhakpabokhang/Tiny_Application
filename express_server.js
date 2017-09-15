@@ -2,13 +2,14 @@ const express = require("express");
 const app = express();
 const PORT = process.env.PORT || 8080; // default port 8080
 const bodyParser = require("body-parser");
-var cookieParser = require('cookie-parser');
+const bcrypt = require('bcrypt');
+const cookieParser = require('cookie-parser');
 
 app.use(cookieParser());
 app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({extended: true}));
 
-// converted the values from strings to objects, added new userID key value pairs
+// converted the values from strings to objects, added new userID key and value pairs
 let urlDatabase = {
   "b2xVn2": {
     longURL: "http://www.lighthouselabs.ca",
@@ -101,12 +102,13 @@ app.post("/register", (req, res) => {
     console.log('nah not null');
     let newUserId = generateRandomString();
     let newEmail = req.body.email;
-    let newPassword = req.body.password;
+    let newPassword = bcrypt.hashSync(req.body.password, 10);
     res.cookie("user_id", newUserId);
     users[newUserId] = {id: newUserId,
                         email: newEmail,
                         password: newPassword
                        };
+    console.log(users[newUserId]);
     res.redirect('/urls');
   }
 });
@@ -129,7 +131,7 @@ app.post("/urls/:key/delete", (req, res) => {
 // ----- LOGIN LOGIC ---------------------
 
 app.post("/login", (req, res) => {
-  var searchResult = null;
+  let searchResult = null;
 
   //search through all users
   for(let id in users){
@@ -144,7 +146,7 @@ app.post("/login", (req, res) => {
     console.log('User not found!');
     res.status(403).end();
   }
-  else if (searchResult.password === req.body.password) {
+  else if (bcrypt.compareSync(req.body.password, searchResult.password)) {
     res.cookie('user_id', searchResult.id);
     console.log('password match');
     let templateVars = { urls: urlDatabase,
@@ -154,7 +156,7 @@ app.post("/login", (req, res) => {
   } else {
     //if someone is not logged in and trying to visit /urls/new have them redirected to to login page //
     console.log("Password do not match!");
-    res.status(403).send();
+    res.status(403).send('<html><h1>Sorry Wrong Password!</h1></html>');
   }
 });
 
