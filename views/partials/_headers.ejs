@@ -6,17 +6,15 @@
   <body>
     <header>
       <h1> Tiny Application</h1>
-       <% if(username){ %>
-        <%= username %>
+       <% if(user){ %>
+        <%= user.email %>
         <br>
         <form method="POST" action='/logout'>
           <button type="submit" value="logout">Logout</button>
         </form>
       <% } else{ %>
-        <form method="POST" action='/login'>
-          <input type="text" name="username" id="username">
-          <button type="submit">Login</button>
-        </form>
+        <a href="/login"/> login </a>
+        <a href="/register"/> Register </a>
       <% }
       %>
     </header>
