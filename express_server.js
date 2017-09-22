@@ -103,10 +103,11 @@ app.post("/register", (req, res) => {
   } else{
     let newUserId = generateRandomString();
     let newEmail = req.body.email;
-    let newPassword = req.body.password;
+    let newPassword = bcrypt.hashSync(req.body.password, 10);
     res.cookie("user_id", newUserId);
     users[newUserId] = {id: newUserId, email: newEmail, password: newPassword};
     res.redirect('/urls');
+    console.log(users[newUserId]);
   }
 });
 
@@ -137,7 +138,7 @@ app.post("/login", (req, res) => {
   if (searchResult === null){
     res.status(403).end();
   }
-  else if (searchResult.password === req.body.password) {
+  else if (bcrypt.compareSync(req.body.password, searchResult.password)) {
     res.cookie('user_id', searchResult.id);
 
     let templateVars = { urls: urlDatabase,
@@ -160,7 +161,7 @@ app.post("/urls/:key/delete", (req, res) => {
     delete urlDatabase[req.params.key];
     res.redirect('/urls');
   } else{
-    res.status(403).send();
+    res.status(403).send('<html><h1>Sorry Wrong Password!</h1></html>');
   }
 });
 
