@@ -7,16 +7,19 @@
     <%- include ./partials/_headers.ejs %>
     <ul>
       <% for(let currentUrl in urls){ %>
+      <% if (user == urls[currentUrl].userID) { %>
       <li>
         <p>Short URL: <%=currentUrl%></p>
-        <%=urls[currentUrl].longURL%>
+        <p>Long URL: <%=urls[currentUrl].url%></p>
       </li>
       <form method="POST" action="/urls/<%=currentUrl%>/delete">
         <button type="submit"> Delete </button>
       </form>
       <a href="/urls/<%=currentUrl%>"> Edit </a>
       <% } %>
+      <% } %>
     </ul>
     <a href="http://localhost:8080/urls/new"/> Get A Shortened URL Here! </a>
   </body>
 </html>
+

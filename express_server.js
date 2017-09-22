@@ -2,22 +2,23 @@ const express = require("express");
 const app = express();
 const PORT = process.env.PORT || 8080; // default port 8080
 const bodyParser = require("body-parser");
-const bcrypt = require('bcrypt');
 const cookieParser = require('cookie-parser');
+const bcrypt = require('bcrypt');
+const password = "purple-monkey-dinosaur"; // you will probably this from req.params
+const hashedPassword = bcrypt.hashSync(password, 10);
 
 app.use(cookieParser());
 app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({extended: true}));
 
-// converted the values from strings to objects, added new userID key and value pairs
 let urlDatabase = {
   "b2xVn2": {
-    longURL: "http://www.lighthouselabs.ca",
-    userID: "userRandomID"
+    url: "http://www.lighthouselabs.ca",
+    userID: "creator"
   },
   "9sm5xK": {
-    longURL: "http://www.google.com",
-    userID: "userRandomID"
+    url: "http://www.google.com",
+    userID: "creator"
   }
 };
 
@@ -25,7 +26,7 @@ const users = {
   "userRandomID": {
     id: "userRandomID",
     email: "user@example.com",
-    password: "yo"
+    password: "purple-monkey-dinosaur"
   },
  "user2RandomID": {
     id: "user2RandomID",
@@ -33,9 +34,6 @@ const users = {
     password: "dishwasher-funk"
   }
 }
-
-
-// GET =========================================================================
 
 app.get("/", (req, res) => {
   res.end("Hello!");
@@ -51,38 +49,39 @@ app.get("/login", (req, res) => {
 
 // on the /urls path respond by rendering the urls_index page
 app.get("/urls", (req, res) =>{
-  let user_id = req.cookies['user_id']
-  let resultingUrls = urlsForUser(user_id);
-  let templateVars = { urls: resultingUrls,
-                       user: users[user_id] };
-  res.render("urls_index", templateVars);
-});
-
-// on this path it renders the urls_new page
-app.get("/urls/new", (req, res) =>{
   if(req.cookies["user_id"]){
-    let templateVars = { user: users[ req.cookies["user_id"] ]};
-    res.render("urls_new", templateVars);
-  }else {
+  let templateVars = { urls: urlDatabase,
+                       user: req.cookies["user_id"]};
+  res.render("urls_index", templateVars);
+  } else{
     res.redirect('/login');
   }
 });
 
-// takes user to the page displaying info based on myShortURL (the page is dynamic)
-app.get("/urls/:myShortURL", (req, res) =>{
-  let templateVars = {  shortURL: req.params.myShortURL,
-                        urlList: urlDatabase,
-                        user: users[ req.cookies["user_id"] ]};
-  res.render('urls_show', templateVars);
+// on this path it renders the urls_new page
+app.get("/urls/new", (req, res) =>{
+  let user_id = req.cookies["user_id"];
+  if(user_id){
+    let templateVars = { user: users[ req.cookies["user_id"] ]};
+    res.render("urls_new", templateVars);
+  }
+  else{
+    res.redirect('/login');
+  }
 });
 
 app.get("/u/:shortURL", (req, res) => {
   // this grabs the parameter of the ;shortURL and then redirects
-  res.redirect('/urls/' + req.params.shortURL);
+  res.redirect(urlDatabase[req.params.shortURL].url);
 });
 
-
-// POST ====================================================================================
+// takes user to the page displaying info based on myVar (the page is dynamic)
+app.get("/urls/:myVar", (req, res) =>{
+  let templateVars = {  shortURL: req.params.myVar,
+                        urlList: urlDatabase,
+                        user: users[ req.cookies["user_id"] ]};
+  res.render('urls_show', templateVars)
+});
 
 // upon posting a new website, generate a randomstring for the website and
 // push it and its url into the UrlDatabase
@@ -90,8 +89,11 @@ app.post("/urls", (req, res) => {
   let randomString = generateRandomString();
   longURL = req.body.longURL;
   // creating a new key and value and adding it to urlDatabase
-  urlDatabase[randomString] = longURL;
-  console.log(urlDatabase);
+  let urlElement = {
+    url: longURL,
+    userID: req.cookies["user_id"]
+  }
+  urlDatabase[randomString] = urlElement;
   res.redirect('/urls/' + randomString);
 });
 
@@ -99,64 +101,50 @@ app.post("/register", (req, res) => {
   if(req.body.email == "" || req.body.password == ""){
     res.status(404).send();
   } else{
-    console.log('nah not null');
     let newUserId = generateRandomString();
     let newEmail = req.body.email;
-    let newPassword = bcrypt.hashSync(req.body.password, 10);
+    let newPassword = req.body.password;
     res.cookie("user_id", newUserId);
-    users[newUserId] = {id: newUserId,
-                        email: newEmail,
-                        password: newPassword
-                       };
-    console.log(users[newUserId]);
+    users[newUserId] = {id: newUserId, email: newEmail, password: newPassword};
     res.redirect('/urls');
   }
 });
 
+// update entry if user is logged in
 app.post("/urls/:id", (req, res) => {
-  if(req.cookie['user_id']){
-    urlDatabase[req.params.id] = req.body.newLongUrl;
-    res.redirect('/urls');
+  longURL = req.body.newLongUrl;
+  let urlElement = {
+    url: longURL,
+    userID: req.cookies["user_id"]
   }
+  urlDatabase[req.params.id] = urlElement;
+  res.redirect('/urls');
 });
 
-// this route gets rid of the key and value pair given by the user and present within the urlDatabase object
-app.post("/urls/:key/delete", (req, res) => {
-  if(req.cookies['user_id']){
-    delete urlDatabase[req.params.key];
-    res.redirect('/urls');
-  }
-});
-
-// ----- LOGIN LOGIC ---------------------
+// READ THROUGH THIS LOGIN
 
 app.post("/login", (req, res) => {
-  let searchResult = null;
-
+  var searchResult = null;
   //search through all users
   for(let id in users){
     let user = users[id];
+
     if(user.email === req.body.email){
-      console.log("user match!" + user.email);
       searchResult = user;
     }
   }
   //check if user has been found
   if (searchResult === null){
-    console.log('User not found!');
     res.status(403).end();
   }
-  else if (bcrypt.compareSync(req.body.password, searchResult.password)) {
+  else if (searchResult.password === req.body.password) {
     res.cookie('user_id', searchResult.id);
-    console.log('password match');
+
     let templateVars = { urls: urlDatabase,
-                         user: searchResult
-                       };
-    res.render('urls_index', templateVars);
+                         user: searchResult };
+    res.redirect('/urls');
   } else {
-    //if someone is not logged in and trying to visit /urls/new have them redirected to to login page //
-    console.log("Password do not match!");
-    res.status(403).send('<html><h1>Sorry Wrong Password!</h1></html>');
+    res.status(403).send();
   }
 });
 
@@ -165,31 +153,23 @@ app.post("/logout", (req, res) => {
  res.redirect('/urls');
 });
 
+// this route gets rid of the key and value pair given by the user and present within the urlDatabase object
+app.post("/urls/:key/delete", (req, res) => {
+  //if user is logged in then only user can delete url
+  if(req.cookies["user_id"] == urlDatabase[req.params.key].userID){
+    delete urlDatabase[req.params.key];
+    res.redirect('/urls');
+  } else{
+    res.status(403).send();
+  }
+});
 
-// Start Server =================================================================================
+
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
 
-
-// Custom Functions ==============================================================================
-
 // generate random number
 function generateRandomString() {
   return Math.random().toString(36).substring(2,8);
-}
-
-// takes in userId and searches the urlDatabase and returns shorturls that belong to the userId
-function urlsForUser(userId){
-  // result holds all the shorUrls matching the userId
-  let result = {};
-  for(let shortURL in urlDatabase){
-    if(urlDatabase[shortURL].userID == userId){
-      result[shortURL] = {
-                         longURl: urlDatabase[shortURL].longURL,
-                         userID: urlDatabase[shortURL].userID
-                         }
-    }
-  }
-  return result;
 }
