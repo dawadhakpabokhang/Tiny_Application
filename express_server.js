@@ -3,11 +3,18 @@ const app = express();
 const PORT = process.env.PORT || 8080; // default port 8080
 const bodyParser = require("body-parser");
 const cookieParser = require('cookie-parser');
+const cookieSession = require('cookie-session');
 const bcrypt = require('bcrypt');
 const password = "purple-monkey-dinosaur"; // you will probably this from req.params
 const hashedPassword = bcrypt.hashSync(password, 10);
 
 app.use(cookieParser());
+app.use(cookieSession({
+  name: 'session',
+  keys: ['key1', 'key2'],
+  // Cookie Options
+  // maxAge: 24 * 60 * 60 * 1000 // 24 hours
+}))
 app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({extended: true}));
 
@@ -49,10 +56,12 @@ app.get("/login", (req, res) => {
 
 // on the /urls path respond by rendering the urls_index page
 app.get("/urls", (req, res) =>{
-  if(req.cookies["user_id"]){
+  // if(req.cookies["user_id"]){
+  if(req.session.user_id){
   let templateVars = { urls: urlDatabase,
-                       user: req.cookies["user_id"]};
+                       user: req.session.user_id};
   res.render("urls_index", templateVars);
+  console.log('Found User Id on Session');
   } else{
     res.redirect('/login');
   }
@@ -60,9 +69,9 @@ app.get("/urls", (req, res) =>{
 
 // on this path it renders the urls_new page
 app.get("/urls/new", (req, res) =>{
-  let user_id = req.cookies["user_id"];
+  let user_id = req.session.user_id;
   if(user_id){
-    let templateVars = { user: users[ req.cookies["user_id"] ]};
+    let templateVars = { user: users[req.session.user_id]};
     res.render("urls_new", templateVars);
   }
   else{
@@ -79,7 +88,8 @@ app.get("/u/:shortURL", (req, res) => {
 app.get("/urls/:myVar", (req, res) =>{
   let templateVars = {  shortURL: req.params.myVar,
                         urlList: urlDatabase,
-                        user: users[ req.cookies["user_id"] ]};
+                        user: users[req.session.user_id]};
+                        // user: users[ req.cookies["user_id"] ]};
   res.render('urls_show', templateVars)
 });
 
@@ -91,7 +101,7 @@ app.post("/urls", (req, res) => {
   // creating a new key and value and adding it to urlDatabase
   let urlElement = {
     url: longURL,
-    userID: req.cookies["user_id"]
+    userID: req.session.user_id
   }
   urlDatabase[randomString] = urlElement;
   res.redirect('/urls/' + randomString);
@@ -104,7 +114,7 @@ app.post("/register", (req, res) => {
     let newUserId = generateRandomString();
     let newEmail = req.body.email;
     let newPassword = bcrypt.hashSync(req.body.password, 10);
-    res.cookie("user_id", newUserId);
+    req.session.user_id = newUserId;
     users[newUserId] = {id: newUserId, email: newEmail, password: newPassword};
     res.redirect('/urls');
     console.log(users[newUserId]);
@@ -116,14 +126,13 @@ app.post("/urls/:id", (req, res) => {
   longURL = req.body.newLongUrl;
   let urlElement = {
     url: longURL,
-    userID: req.cookies["user_id"]
+    userID: req.session.user_id
   }
   urlDatabase[req.params.id] = urlElement;
   res.redirect('/urls');
 });
 
-// READ THROUGH THIS LOGIN
-
+// Check User Login
 app.post("/login", (req, res) => {
   var searchResult = null;
   //search through all users
@@ -139,7 +148,8 @@ app.post("/login", (req, res) => {
     res.status(403).end();
   }
   else if (bcrypt.compareSync(req.body.password, searchResult.password)) {
-    res.cookie('user_id', searchResult.id);
+    // res.cookie('user_id', searchResult.id);
+    req.session.user_id = searchResult.id;
 
     let templateVars = { urls: urlDatabase,
                          user: searchResult };
@@ -150,14 +160,13 @@ app.post("/login", (req, res) => {
 });
 
 app.post("/logout", (req, res) => {
- res.clearCookie("user_id");
+ req.session = null;
  res.redirect('/urls');
 });
 
 // this route gets rid of the key and value pair given by the user and present within the urlDatabase object
 app.post("/urls/:key/delete", (req, res) => {
-  //if user is logged in then only user can delete url
-  if(req.cookies["user_id"] == urlDatabase[req.params.key].userID){
+  if(req.session.user_id == urlDatabase[req.params.key].userID){
     delete urlDatabase[req.params.key];
     res.redirect('/urls');
   } else{
