@@ -2,8 +2,8 @@ Tiny App Project
 
 Tiny App is a simple Url shortner. 
 
-This app uses Node and Expres and will allow users to shorten long URLs much like TinyURL.com 
-and bit.ly do. Users will be alowwed to register and login. They will also have cookies that store 
+This app uses Node and Express and will allow users to shorten long URLs much like TinyURL.com 
+and bit.ly do. Users will be allowed to register and login. They will also have cookies that store 
 their own urls.
 
 Dependencies
